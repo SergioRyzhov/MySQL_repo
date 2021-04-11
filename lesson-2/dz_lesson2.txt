@@ -1,0 +1,49 @@
+--создание .my.cnf
+1)
+
+[client]
+user=root
+password=111111
+
+2)
+
+--работа с БД
+--входим
+mysql -u root -p
+111111
+
+--создаем базу
+create database example;
+
+--выбираем
+show databases;
+use example;
+
+--создаем таблицу
+create table user(id INT UNSIGNED, name VARCHAR(255));
+
+3)
+
+--работа с дампом
+--обязательно выходим из mysql
+exit
+--делаем дамп
+mysqldump -u root -p111111 example > example_dump.sql
+--заходим в утилиту
+mysql -u root -p111111
+--создаем новую базу
+create database if not exists sample;
+--обязательно выходим из mysql
+exit
+--заливаем в новую базу наш дамп
+mysql -u root -p111111 sample < example_dump.sql
+--заходим, проверяем
+mysql -u root -p111111
+use sample
+show tables;
+
+4)
+
+mysql -u root -p111111 mysql -e "select * from help_keyword limit 0, 100;" > ./mysql_1-100_help_keyword.sql
+--заходим через vim считаем строки
+vim mysql_1-100_help_keyword.sql

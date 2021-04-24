@@ -1,0 +1,77 @@
+USE VK;
+
+SHOW TABLES;
+
+SELECT * FROM users LIMIT 10;
+
+-- исправляем везде некорректную разницу во времени создания и обновления записи
+UPDATE users SET updated_at = NOW()  WHERE updated_at < created_at;
+UPDATE profiles SET updated_at = NOW()  WHERE updated_at < created_at;
+UPDATE media SET updated_at = NOW()  WHERE updated_at < created_at;
+UPDATE friendship_statuses SET updated_at = NOW()  WHERE updated_at < created_at;
+UPDATE friendship SET updated_at = NOW()  WHERE updated_at < created_at;
+UPDATE communities SET updated_at = NOW()  WHERE updated_at < created_at;
+
+DESC profiles;
+
+-- просмотр 10 записей таблиц для проверки
+SELECT * FROM friendship_statuses LIMIT 10;
+SELECT * FROM friendship LIMIT 100;
+SELECT * FROM communities LIMIT 10;
+SELECT * FROM communities_user LIMIT 100;
+SELECT * FROM profiles LIMIT 10;
+SELECT * FROM messages LIMIT 10;
+SELECT * FROM media LIMIT 10;
+SELECT * FROM media_types LIMIT 10;
+
+-- таблица messages
+-- сообщения не должны отправляться самому себе, поэтому до бавим +1
+-- к значению to_user_id 
+UPDATE messages SET to_user_id = to_user_id + 1
+ WHERE from_user_id = to_user_id;
+
+-- таблица media
+-- ссылки на медиафайлы
+-- и метаданные
+UPDATE media SET filename = CONCAT( 
+	'http://dropbox.com/vk/',
+	filename,
+	'.',
+	(SELECT name FROM extensions ORDER BY RAND() LIMIT 1))
+;
+
+CREATE TEMPORARY TABLE extensions(name VARCHAR(6));
+INSERT INTO extensions VALUES 
+	('mpeg'), 
+	('mp3'),
+	('mp4'), 
+	('png'), 
+	('jpg'),
+	('txt');
+SELECT * FROM extensions;
+SELECT name FROM extensions ORDER BY RAND() LIMIT 1;
+
+-- json
+-- {"owner":"First Last"}
+SELECT first_name, last_name FROM users WHERE id = 7;
+UPDATE media SET metadata = CONCAT(
+	'{"owner":"',
+	(SELECT CONCAT(first_name,' ', last_name)
+	 FROM users WHERE users.id = media.user_id),
+	'"}'
+); 
+-- смена типа данных longtext на json
+DESC media;
+ALTER TABLE media MODIFY COLUMN metadata JSON;
+	
+-- в таблице friendship сделаем неуникальными значения user_id
+UPDATE friendship SET
+	user_id = FLOOR(1 + RAND() * 100);
+
+-- в таблице friendship сделаем неуникальными значения user_id
+UPDATE communities_user SET
+	community_id = FLOOR(1 + RAND() * 100);
+	
+-- поменяем тип данных для пола на ENUM
+DESC profiles;
+ALTER TABLE profiles MODIFY COLUMN gender ENUM('m', 'f');

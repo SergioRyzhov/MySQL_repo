@@ -1,0 +1,26 @@
+-- 3. Определить кто больше поставил лайков (всего) - мужчины или женщины?
+-- 4. Вывести для каждого пользователя количество созданных сообщений, постов, загруженных медиафайлов и поставленных лайков.
+-- 5. (по желанию) Подсчитать количество лайков которые получили 10 самых молодых пользователей.
+
+-- 3)
+DESC likes;
+DESC profiles;
+
+
+SELECT COUNT(m) AS m, COUNT(f) AS f FROM (
+	SELECT 
+	 (SELECT user_id FROM profiles WHERE likes.user_id = profiles.user_id AND gender = 'm') AS m,
+	 (SELECT user_id FROM profiles WHERE likes.user_id = profiles.user_id AND gender = 'f') AS f
+	FROM likes
+) AS k;
+
+
+-- 4)
+
+	  
+SELECT first_name,
+	(SELECT COUNT(from_user_id) from messages WHERE from_user_id = users.id) AS q_messages,
+	(SELECT COUNT(user_id) from posts WHERE user_id = users.id) AS q_posts,
+	(SELECT COUNT(user_id) from media WHERE user_id = users.id) AS q_media,
+	(SELECT COUNT(user_id) from likes WHERE user_id = users.id) AS q_likes
+FROM users;

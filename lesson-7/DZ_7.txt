@@ -1,0 +1,81 @@
+-- 1)Составьте список пользователей users, которые осуществили 
+-- хотя бы один заказ orders в интернет магазине.
+
+-- 2)Выведите список товаров products и разделов catalogs, 
+-- который соответствует товару.
+
+-- 3)(по желанию) Пусть имеется таблица рейсов flights (id, from, to) 
+-- и таблица городов cities (label, name). Поля from, to и label содержат 
+-- английские названия городов, поле name — русское. 
+-- Выведите список рейсов flights с русскими названиями городов.
+
+
+SELECT * FROM users;
+DESC users;
+SELECT * FROM orders;
+DESC orders;
+SELECT * FROM orders_products;
+DESC orders_products;
+SELECT * FROM products;
+DESC products;
+SELECT * FROM catalogs;
+DESC catalogs;
+
+-- создадим пару заказов
+INSERT orders(user_id, created_at, updated_at)
+VALUES ('2','2021-01-05 15:20:00',NOW()),
+		('5','2021-02-11 13:02:00',NOW());
+
+INSERT orders_products(order_id, product_id)
+VALUES ('1', '1'),
+		('2', '5');
+		
+-- решение задачи 1)
+SELECT name
+FROM users
+	JOIN orders ON users.id = orders.user_id;
+	
+-- решение задачи 2)
+SELECT products.name, '<==', catalogs.name
+FROM products
+	JOIN catalogs ON catalogs.id = products.catalog_id;
+
+-- решение задачи 3) 
+-- создадим и наполним таблицы flights и cities
+
+CREATE TABLE flights
+(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	`from` VARCHAR(10) NOT NULL,
+	`to` VARCHAR(10) NOT NULL	
+);
+CREATE TABLE cities
+(
+	label VARCHAR(10) NOT NULL,
+	`name` VARCHAR(10) NOT NULL
+);
+INSERT flights(`from`,`to`)
+VALUES ('moscow', 'omsk'),
+		('novgorod', 'kazan'),
+		('irkutsk', 'moscow'),
+		('omsk', 'irkutsk'),
+		('moscow', 'kazan');
+INSERT cities(`label`,`name`)
+VALUES ('moscow', 'Москва'),
+		('irkutsk', 'Иркутск'),
+		('novgorod', 'Новгород'),
+		('kazan', 'Казань'),
+		('omsk', 'Омск');
+	
+-- решение задачи
+SELECT
+	(SELECT name FROM cities WHERE cities.label = flights.`from`) AS 'ОТКУДА',
+	(SELECT name FROM cities WHERE cities.label = flights.`to`) AS 'КУДА'
+FROM flights;
+
+-- решение задачи с использованием JOIN
+SELECT cities.name AS 'ОТКУДА', 
+	(SELECT name FROM cities WHERE cities.label = flights.`to`) AS 'КУДА'
+FROM flights
+JOIN
+	cities ON cities.label = flights.`from` ORDER BY id;

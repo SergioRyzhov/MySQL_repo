@@ -1,0 +1,73 @@
+-- 3.Определить кто больше поставил лайков (всего) - мужчины или женщины?
+-- 4.Вывести для каждого пользователя количество созданных сообщений, постов, 
+-- загруженных медиафайлов и поставленных лайков.
+-- 5.(по желанию) Подсчитать количество лайков которые получили 10 самых молодых пользователей.
+
+-- 3)
+DESC profiles ;
+SELECT * FROM profiles LIMIT 10;
+DESC likes;
+
+SELECT COUNT(m.user_id) AS m, COUNT(f.user_id) AS f
+FROM likes 
+	LEFT JOIN profiles m
+		ON m.user_id = likes.user_id AND m.gender = 'm'
+	LEFT JOIN profiles f
+		ON f.user_id = likes.user_id AND f.gender = 'f';
+	
+	
+-- 4)
+DESC messages;
+DESC posts;
+DESC media;
+DESC likes;
+
+	
+SELECT CONCAT(users.first_name, ' ', users.last_name) as name, 
+	COUNT(DISTINCT msg.id) AS messages,
+	COUNT(DISTINCT p.id) AS posts,
+	COUNT(DISTINCT m.id) AS mediafiles,
+	COUNT(DISTINCT l.id) AS likes
+FROM users
+	LEFT JOIN messages msg
+		ON msg.from_user_id = users.id
+	LEFT JOIN posts p
+		ON p.user_id = users.id
+	LEFT JOIN media m
+		ON m.user_id = users.id
+	LEFT JOIN likes l
+		ON l.user_id = users.id
+GROUP BY users.id
+ORDER BY users.id;
+
+-- 5)
+DESC profiles ;
+SELECT * FROM profiles;
+SELECT * FROM likes;
+
+-- добавим столбец birthday в таблицу profiles
+ALTER TABLE profiles ADD COLUMN birthday datetime 
+DEFAULT CURRENT_TIMESTAMP
+AFTER gender;
+
+UPDATE profiles
+SET birthday = (FROM_UNIXTIME(UNIX_TIMESTAMP('1970-04-30') + FLOOR(0 + (RAND() * 630720000))));
+
+-- решение задачи
+SELECT profiles.user_id as user_id,
+	CONCAT(u.first_name, ' ', u.last_name) as name,
+	COUNT(DISTINCT l.id) AS likes
+FROM profiles
+	LEFT JOIN likes l
+		ON l.user_id = profiles.user_id
+	LEFT JOIN users u
+		ON profiles.user_id = u.id
+GROUP BY profiles.user_id
+ORDER BY profiles.birthday DESC
+LIMIT 10;
+
+-- проверка
+SELECT *
+FROM profiles
+ORDER BY birthday DESC
+LIMIT 10;

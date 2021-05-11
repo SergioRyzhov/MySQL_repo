@@ -1,0 +1,81 @@
+DESC users;
+SELECT * FROM users;
+
+-- Транзакции, переменные, представления
+-- 1)
+START TRANSACTION;
+USE sample;
+INSERT INTO users (id, name)
+VALUES (4, 'Геннадий'); # вставка строки в sample.users из базы shop
+USE shop;
+DELETE FROM users WHERE id = 1; # удаление строки из shop.users
+COMMIT;
+
+-- 2)
+CREATE VIEW prod_cat_names AS 
+SELECT products.name AS prod_name, catalogs.name AS cat_name
+FROM products
+	LEFT JOIN catalogs ON catalogs.id = products.catalog_id;
+SELECT * FROM prod_cat_names;
+
+-- Администрирование MySQL
+-- 1)
+CREATE USER shop_read;
+CREATE USER shop;
+GRANT SELECT ON shop.* TO shop_read;
+GRANT ALL PRIVILEGES ON shop.* TO shop;
+FLUSH PRIVILEGES;
+
+-- Хранимые процедуры и функции, триггеры
+-- 1)
+DROP FUNCTION IF EXISTS hello;
+
+DELIMITER //
+CREATE FUNCTION hello()
+RETURNS VARCHAR(255) DETERMINISTIC
+BEGIN
+	DECLARE hello VARCHAR(255);
+	IF(HOUR(NOW()) BETWEEN 6 AND 12) THEN 
+		SET hello = 'Доброе утро';
+	END IF;
+	IF(HOUR(NOW()) BETWEEN 12 AND 18) THEN 
+		SET hello = 'Добрый день';
+	END IF;
+	IF(HOUR(NOW()) BETWEEN 18 AND 0) THEN 
+		SET hello = 'Добрый вечер';
+	END IF;
+	IF(HOUR(NOW()) BETWEEN 0 AND 6) THEN 
+		SET hello = 'Доброй ночи';
+	END IF;
+	RETURN hello;
+END//
+DELIMITER ;
+
+SELECT hello();
+
+-- 2)
+DROP TRIGGER IF EXISTS notnull_product_fill;
+
+DELIMITER //
+CREATE TRIGGER notnull_product_fill BEFORE INSERT ON products
+FOR EACH ROW
+BEGIN
+	IF(ISNULL(NEW.description) AND ISNULL(NEW.name)) THEN 
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cancel operation';
+	END IF;
+	SET NEW.description = IFNULL(NEW.description, 'nodesc');
+	SET NEW.name = IFNULL(NEW.name, 'noname');
+END//
+DELIMITER ;
+
+INSERT INTO products (name, description)
+VALUES (NULL, 'test description');
+
+INSERT INTO products (name, description)
+VALUES ('Intel Core i10-10100', NULL);
+
+INSERT INTO products (name, description)
+VALUES (NULL, NULL);
+
+DELETE FROM shop.products
+WHERE id > 7;

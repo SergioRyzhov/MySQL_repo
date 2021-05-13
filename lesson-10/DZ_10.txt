@@ -1,0 +1,70 @@
+-- 1)
+DESC users;
+
+CREATE INDEX users_last_name_idx ON users(last_name);
+CREATE UNIQUE INDEX users_email_uq ON users(email);
+CREATE INDEX users_first_name_last_name_idx
+	ON users(first_name, last_name);
+	
+SHOW INDEX FROM users;
+
+-- ===================================================
+DESC profiles;
+
+CREATE INDEX profiles_birthday_idx ON profiles(birthday);
+CREATE INDEX profiles_city_idx ON profiles(city);
+CREATE INDEX profiles_country_idx ON profiles(country);
+
+SHOW INDEX FROM profiles;
+
+-- ===================================================
+DESC media ;
+
+CREATE INDEX media_filename_idx ON media(filename);
+CREATE INDEX media_filename_media_type_id_idx
+	ON media(filename, media_type_id);
+
+SHOW INDEX FROM media;
+
+-- ===================================================
+DESC posts;
+
+CREATE INDEX posts_head_idx ON posts(head);
+
+SHOW INDEX FROM posts;
+
+
+
+-- 2)
+
+SELECT DISTINCT 
+	communities.name AS comm_name,
+	COUNT(communities_user.user_id) OVER()/COUNT(communities.id) OVER() AS 'avg_in_commties',
+	FIRST_VALUE(birthday) 
+		OVER (PARTITION BY communities_user.community_id 
+		  		ORDER BY birthday 
+		  		DESC) 
+		  		AS 'yangest_in_commty',
+	FIRST_VALUE(birthday) 
+		OVER (PARTITION BY communities_user.community_id 
+		  		ORDER BY birthday)		
+				AS 'oldest_in_commty',
+	COUNT(users.id) OVER(PARTITION BY communities.id) AS 'all_users_in_comm',
+	COUNT(users.id) OVER() AS 'all_users',
+	COUNT(users.id) OVER(PARTITION BY communities.id)/COUNT(users.id) OVER() * 100 AS 'uig/cu,%'
+	FROM profiles
+		JOIN communities_user
+			ON communities_user.user_id = profiles.user_id
+		JOIN communities
+			ON communities.id = communities_user.community_id
+		JOIN users
+			ON users.id = profiles.user_id;
+		
+
+		
+
+DESC communities ;
+DESC profiles;
+SELECT * FROM communities_user WHERE community_id = 1;
+SELECT * FROM profiles WHERE user_id IN (40, 87);
+SELECT * FROM users WHERE id IN (40, 87);

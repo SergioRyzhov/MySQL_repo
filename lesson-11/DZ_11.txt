@@ -1,0 +1,54 @@
+-- 1)
+
+DROP TABLE IF EXISTS logs;
+CREATE TABLE logs
+(
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT "Идентификатор строки",
+	table_id BIGINT UNSIGNED NOT NULL COMMENT "Идентификатор строки таблицы в которую сделали запись",
+	table_name VARCHAR(75) NOT NULL COMMENT "имя таблицы, куда была помещена запись",
+	creation_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT "Время помещения записи в таблицу",
+	table_name_field VARCHAR(255) NULL COMMENT "данные из поля name редактируемой таблицы"
+) ENGINE=ARCHIVE;
+
+
+DROP TRIGGER IF EXISTS log_fill_on_users;
+DROP TRIGGER IF EXISTS log_fill_on_products;
+DROP TRIGGER IF EXISTS log_fill_on_catalogs;
+DELIMITER //
+CREATE TRIGGER log_fill_on_users AFTER INSERT ON users
+FOR EACH ROW
+BEGIN
+	INSERT INTO logs (table_id, table_name, table_name_field)
+	VALUES (NEW.id, 'users', NEW.name);
+END//
+
+CREATE TRIGGER log_fill_on_products AFTER INSERT ON products
+FOR EACH ROW
+BEGIN
+	INSERT INTO logs (table_id, table_name, table_name_field)
+	VALUES (NEW.id, 'products', NEW.name);
+END//
+
+CREATE TRIGGER log_fill_on_catalogs AFTER INSERT ON catalogs
+FOR EACH ROW
+BEGIN
+	INSERT INTO logs (table_id, table_name, table_name_field)
+	VALUES (NEW.id, 'catalogs', NEW.name);
+END//
+DELIMITER ;
+
+
+
+INSERT INTO users (name, birthday_at)
+VALUES ('Illya', '1980-05-03');
+
+INSERT INTO products (name, description)
+VALUES ('Intel Core i10-10100', 'The fastest proc in the world');
+
+INSERT INTO catalogs (name)
+VALUES ('Computers CHERRY');
+ 
+SELECT * FROM users;
+SELECT * FROM products;
+SELECT * FROM catalogs;
+SELECT * FROM logs;
